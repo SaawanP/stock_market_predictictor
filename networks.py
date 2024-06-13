@@ -30,21 +30,39 @@ store trained values for different stocks for future use
 
 
 class LinearNetwork(nn.Module):
-    def __init__(self, history_length, prediction_time):
+    def __init__(self, history_length, input_size, output_size):
         super().__init__()
-        self.soft_max = nn.Softmax(0)
         self.linear_stack = nn.Sequential(
-            nn.Flatten(0),
-            nn.Linear(history_length * 6, 512),
-            nn.Linear(512, 512),
-            nn.Linear(512, 10),
-            nn.Linear(10, prediction_time)
+            nn.Flatten(),
+            nn.Linear(history_length * input_size, 10),
+            nn.Linear(10, output_size)
         )
 
     def forward(self, x):
-        print("start", end=" ")
-        print(x)
-        x = self.soft_max(x)
-        print(x)
         logits = self.linear_stack(x)
         return logits
+
+
+class LSTM(nn.Module):
+    def __init__(self, seq_length, input_size, hidden_length):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size, hidden_length, batch_first=True)
+        self.stack = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(seq_length * hidden_length, 1)
+        )
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.stack(out)
+        return out
+
+
+if __name__ == '__main__':
+    rnn = nn.LSTM(10, 20, 2, batch_first=True)
+    inp = torch.ones(5, 3, 10)
+    output, (hn, cn) = rnn(inp)
+    print(output.size())
+    flatten = nn.Flatten()
+    output = flatten(output)
+    print(output.size())
